@@ -6,7 +6,10 @@ import pytest
     (["B"], 30),
     (["A", "B", "C", "D"], 105),
     (["A", "A", "A"], 130),
-    (["B", "B"], 45)
+    (["B", "B"], 45),
+    (["B", "B", "B", "B"], 90),
+    (["A", "A", "A", "B", "B"], 175),
+    #(["A", "A", "A", "A", "A"], 230)
 ])
 def test_checkout_total(items, cost):
     checkout = Checkout()
@@ -28,11 +31,7 @@ class Checkout():
         self._basket.append(sku)
 
     def Total(self):
-        if(self._basket.count("A") == 3):
-            self._total -= 20
-
-        if(self._basket.count("B") == 2):
-            self._total -= 15
+        self._total -= Discounter().GetDiscountTotal(self._basket)
 
         return self._total
 
@@ -44,20 +43,28 @@ class Discounter():
     def GetDiscountTotal(self, basket):
         totalDiscount = 0
 
-        for rule in self._rules:
-            checkout.Scan(item)
+        # for rule in self._rules:
+        #   if(rule.ShouldApplyDiscount(basket)):
+        #        totalDiscount += rule.DiscountToApply(basket)
+
+        for amount in [rule.DiscountToApply(basket) for rule in self._rules if rule.ShouldApplyDiscount(basket)]:
+            totalDiscount += amount
+
+        return totalDiscount
 
 
 class DiscountRule():
-    def __init__(self, sku, numberOfItems, discountAmount):
+    def __init__(self, sku, quantity, discountAmount):
         self._sku = sku
-        self._numberOfItems = numberOfItems
+        self._quantity = quantity
         self._discountAmount = discountAmount
 
-    def GetDiscount(self, basket):
-        countOfSkus = basket.count(self._sku)
+    def ShouldApplyDiscount(self, basket):
+        countOfSkus = self.GetCount(basket)
+        return countOfSkus % self._quantity == 0 and countOfSkus > 0
 
-        if(countOfSkus == self._numberOfItems):
-            return self._discountAmount
+    def DiscountToApply(self, basket):
+        return self._discountAmount * (self.GetCount(basket) / self._quantity)
 
-        return 0
+    def GetCount(self, basket):
+        return basket.count(self._sku)
