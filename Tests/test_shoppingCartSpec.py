@@ -9,7 +9,7 @@ import pytest
     (["B", "B"], 45),
     (["B", "B", "B", "B"], 90),
     (["A", "A", "A", "B", "B"], 175),
-    #(["A", "A", "A", "A", "A"], 230)
+    (["A", "A", "A", "A", "A"], 230)
 ])
 def test_checkout_total(items, cost):
     checkout = Checkout()
@@ -43,10 +43,6 @@ class Discounter():
     def GetDiscountTotal(self, basket):
         totalDiscount = 0
 
-        # for rule in self._rules:
-        #   if(rule.ShouldApplyDiscount(basket)):
-        #        totalDiscount += rule.DiscountToApply(basket)
-
         for amount in [rule.DiscountToApply(basket) for rule in self._rules if rule.ShouldApplyDiscount(basket)]:
             totalDiscount += amount
 
@@ -60,11 +56,10 @@ class DiscountRule():
         self._discountAmount = discountAmount
 
     def ShouldApplyDiscount(self, basket):
-        countOfSkus = self.GetCount(basket)
-        return countOfSkus % self._quantity == 0 and countOfSkus > 0
+        return self.GetCount(basket) > 0
 
     def DiscountToApply(self, basket):
-        return self._discountAmount * (self.GetCount(basket) / self._quantity)
+        return self._discountAmount * (self.GetCount(basket) // self._quantity)
 
     def GetCount(self, basket):
         return basket.count(self._sku)
